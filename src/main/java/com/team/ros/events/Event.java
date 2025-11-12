@@ -1,14 +1,14 @@
 package com.team.ros.events;
 
 public class Event {
-private OrderEventType type;
-private String orderId;
-private long timeMillis;
+private final OrderEventType type;
+private final String orderId;
+private final long timeMillis;
 
-    public Event(OrderEventType type, String orderId, long timeMillis) {
+    public Event(OrderEventType type, String orderId) {
         this.type = type;
         this.orderId = orderId;
-        this.timeMillis = timeMillis;
+        this.timeMillis = System.currentTimeMillis();
     }
 
     public OrderEventType getType() {

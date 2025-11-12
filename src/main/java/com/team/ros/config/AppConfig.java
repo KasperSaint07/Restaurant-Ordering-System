@@ -1,7 +1,7 @@
 package com.team.ros.config;
 
 public class AppConfig {
-    private static AppConfig Instance = new AppConfig();
+    private static final AppConfig Instance = new AppConfig();
     private AppConfig() {}
     public static AppConfig getInstance() {
         return Instance;
@@ -39,7 +39,7 @@ public class AppConfig {
 
     public String getDefaultPaymentProvider() {
         return defaultPaymentProvider;
-    }
+    }2
 
     public boolean isAllowDiscountsForAlcohol() {
         return allowDiscountsForAlcohol;
@@ -49,31 +49,31 @@ public class AppConfig {
         Instance = instance;
     }
 
-    public void setCurrency(String currency) {
-        this.currency = currency;
+    public void setCurrency(String v) {
+        currency = v;
     }
 
-    public void setVatPercent(double vatPercent) {
-        this.vatPercent = vatPercent;
+    public void setVatPercent(double v) {
+        vatPercent = v;
     }
 
-    public void setDemoMode(boolean demoMode) {
-        this.demoMode = demoMode;
+    public void setDemoMode(boolean v) {
+        demoMode = v;
     }
 
-    public void setSimulateRandomPaymentFailures(boolean simulateRandomPaymentFailures) {
-        this.simulateRandomPaymentFailures = simulateRandomPaymentFailures;
+    public void setSimulateRandomPaymentFailures(boolean v) {
+        simulateRandomPaymentFailures = v;
     }
 
-    public void setDefaultPricingStrategy(String defaultPricingStrategy) {
-        this.defaultPricingStrategy = defaultPricingStrategy;
+    public void setDefaultPricingStrategy(String v) {
+        defaultPricingStrategy = v;
     }
 
-    public void setDefaultPaymentProvider(String defaultPaymentProvider) {
-        this.defaultPaymentProvider = defaultPaymentProvider;
+    public void setDefaultPaymentProvider(String v) {
+        defaultPaymentProvider = v;
     }
 
-    public void setAllowDiscountsForAlcohol(boolean allowDiscountsForAlcohol) {
-        this.allowDiscountsForAlcohol = allowDiscountsForAlcohol;
+    public void setAllowDiscountsForAlcohol(boolean v) {
+        allowDiscountsForAlcohol = v;
     }
 }
