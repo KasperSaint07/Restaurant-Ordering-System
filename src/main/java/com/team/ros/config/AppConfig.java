@@ -1,7 +1,7 @@
 package com.team.ros.config;
 
 public class AppConfig {
-    private static final AppConfig Instance = new AppConfig();
+    private static AppConfig Instance = new AppConfig();
     private AppConfig() {}
     public static AppConfig getInstance() {
         return Instance;
@@ -39,7 +39,7 @@ public class AppConfig {
 
     public String getDefaultPaymentProvider() {
         return defaultPaymentProvider;
-    }2
+    }
 
     public boolean isAllowDiscountsForAlcohol() {
         return allowDiscountsForAlcohol;
