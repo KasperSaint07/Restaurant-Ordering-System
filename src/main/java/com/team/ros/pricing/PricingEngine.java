@@ -24,7 +24,7 @@ public class PricingEngine {
             disc = subtotal;
         double afterDisc = subtotal - disc;
 
-        double vat = afterDiscount * AppConfig.getInstance().getVatPercent()/100.0;
+        double vat = afterDiscount * AppConfig.getInstance().getVatPercent()/ 100.0;
         return afterDiscount + vat;
         }
         public static double discount(Order order) {

@@ -14,7 +14,7 @@ public class HappyHours implements PricingStrategy {
     }
     @Override
     public String name() {
-        return "Happy Hours(" + fromHour + "-" + toHour + "," + percent + "%)";
+        return "Happy Hours(" + fromHour + "-" + toHour + "," + percent + " %)";
     }
     @Override
     public double discount(Order order) {

@@ -1,4 +1,5 @@
 package com.team.ros.pricing;
+
 import com.team.ros.order.Order;
 
 public class NoDiscount implements PricingStrategy {
