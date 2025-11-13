@@ -22,7 +22,7 @@ public class ComboDiscount implements PricingStrategy {
         double comboTotal = 0.0;
         for (int i = 0; i < order.getItems().size(); i++) {
             OrderItem it = order.getItems().get(i);
-            if (it.getMealName().startsWith(" Combo:")) {
+            if (it.getMealName().startsWith("Combo:")) {
                 comboTotal+=it.subtotal();
             }
         }

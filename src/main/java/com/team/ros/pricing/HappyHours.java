@@ -1,5 +1,4 @@
 package com.team.ros.pricing;
-
 import java.time.LocalTime;
 
 public class HappyHours implements PricingStrategy {
