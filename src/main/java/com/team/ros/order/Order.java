@@ -57,3 +57,4 @@ public class Order {
         return "Order{id=" + id + ", items=" + items.size() + ", status=" + status + ", total=" + totalWithVat() + "}";
     }
 }
+
