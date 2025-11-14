@@ -20,6 +20,6 @@ public class OrderItem {
     public double getUnitPrice() { return unitPrice; }
     public int getQuantity() { return quantity; }
 
-    public void setQuantity(int qty) { Math.max(1, qty); }
+    public void setQuantity(int qty) { this.quantity = Math.max(1, qty); }
     public double subtotal() { return unitPrice * quantity; }
 }

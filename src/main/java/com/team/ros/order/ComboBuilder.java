@@ -31,8 +31,8 @@ public class ComboBuilder {
     public Meal build(String comboId) {
         if (first == null || second == null) return null;
         String name = "Combo: " + first.name() + " " + second.name();
-        double sum = first.calories() + second.calories();
-        double price = sum * (1.0 - discountPercent / 100.0);
+        double base = first.price() + second.price();
+        double price = base * (1.0 - discountPercent / 100.0);
         int calories = first.calories() + second.calories();
         return new ComboMeal(comboId, name, price, calories);
     }

@@ -13,6 +13,7 @@ public final class CheckoutFacade {
     public static CheckoutResult checkout(Order order, String providerName) {
         if (order == null) {
             throw new IllegalArgumentException("order == null");
+        }
 
             double subtotal = order.totalBeforeVat();
             double discount = PricingEngine.discount(order);
@@ -48,4 +49,3 @@ public final class CheckoutFacade {
             return CheckoutResult.success(subtotal, discount, vat, total, provider, strategyName, receiptText);
         }
     }
-}

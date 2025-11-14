@@ -19,10 +19,13 @@ public final class CheckoutResult {
         this.message = message;
     }
 
+
+
+
     static CheckoutResult success(double s, double d, double v, double t, String p, String st, String r) {
-        return new CheckoutResult(true s, d, v, t, p, st, r, null);
+        return new CheckoutResult(true, s, d, v, t, p, st, r, null);
     }
     static CheckoutResult failed(double s, double d, double v, double t, String p, String st, String msg) {
-        return new CheckoutResult(false, s, d, v, t, p, st, msg);
+        return new CheckoutResult(false, s, d, v, t, p, st,null, msg);
     }
 }
