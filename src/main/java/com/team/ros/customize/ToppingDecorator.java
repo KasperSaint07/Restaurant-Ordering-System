@@ -13,3 +13,4 @@ public class ToppingDecorator implements Meal {
     @Override public int calories() { return base.calories(); }
     @Override public MenuCategory category() { return base.category(); }
 }
+
