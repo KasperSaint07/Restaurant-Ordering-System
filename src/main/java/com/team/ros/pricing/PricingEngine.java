@@ -1,6 +1,7 @@
 package com.team.ros.pricing;
 
 import com.team.ros.config.AppConfig;
+import com.team.ros.order.Order;
 
 import java.time.LocalTime;
 
@@ -15,6 +16,7 @@ public class PricingEngine {
     public static PricingStrategy current() {
         return strategy;
     }
+
     public static double totalWithVat(Order order) {
         double subtotal = order.totalBeforeVat();
         double disc = strategy.discount(order);
@@ -24,9 +26,9 @@ public class PricingEngine {
             disc = subtotal;
         double afterDisc = subtotal - disc;
 
-        double vat = afterDiscount * AppConfig.getInstance().getVatPercent()/100.0;
-        return afterDiscount + vat;
-        }
+        double vat = afterDisc * AppConfig.getInstance().getVatPercent()/100.0;
+        return afterDisc + vat;
+    }
         public static double discount(Order order) {
         double d = strategy.discount(order);
         double subtotal = order.totalBeforeVat();
