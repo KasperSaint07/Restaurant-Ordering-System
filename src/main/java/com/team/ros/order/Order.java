@@ -1,5 +1,10 @@
 package com.team.ros.order;
 
+import com.team.ros.config.AppConfig;
+import com.team.ros.events.EventBus;
+import com.team.ros.events.OrderEventType;
+import com.team.ros.meals.Meal;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,8 +21,8 @@ public class Order {
     public OrderStatus getStatus() { return status; }
     public List<OrderItem> getItems() { return items; }
 
-    public void add(String mealId, String mealName, double price, int qty) {
-        items.add(new OrderItem(mealId, mealName, price, qty));
+    public void add(Meal meal, int qty) {
+        items.add(new OrderItem(meal, qty));
     }
 
     public void removeAt(int index) {
@@ -26,9 +31,29 @@ public class Order {
 
     public double totalBeforeVat() {
         double s = 0.0;
-        for (int i = 0; i < items.size(); i++) s += items.get(i).subtotal();
-        return s;
+        for (int i = 0; i < items.size(); i++) s+= items.get(i).subtotal(); return s;
     }
 
-    public void setStatus(OrderStatus s) { this.status = s; }
+    public double vatAmount() {
+        double percent = AppConfig.getInstance().getVatPercent();
+        return totalBeforeVat() * percent / 100;
+    }
+
+    public double totalWithVat() { return totalBeforeVat() + vatAmount(); }
+
+    public void setStatus(OrderStatus newStatus) {
+        this.status = newStatus;
+        switch(newStatus) {
+            case PAID -> EventBus.publish(OrderEventType.ORDER_PAID, id);
+            case COOKING -> EventBus.publish(OrderEventType.ORDER_COOKING, id);
+            case READY -> EventBus.publish(OrderEventType.ORDER_READY, id);
+            case COMPLETED -> EventBus.publish(OrderEventType.ORDER_COMPLETED, id);
+            default -> {}
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Order{id=" + id + ", items=" + items.size() + ", status=" + status + ", total=" + totalWithVat() + "}";
+    }
 }
