@@ -11,5 +11,6 @@ public final class NotifierSetup {
         EventBus.subscribe(new KitchenNotifier());
         EventBus.subscribe(new CustomerNotifier());
         EventBus.subscribe(new PaymentAlert());
+        EventBus.subscribe(new KitchenScreen());
     }
 }

@@ -28,4 +28,8 @@ public final class CheckoutResult {
     static CheckoutResult failed(double s, double d, double v, double t, String p, String st, String msg) {
         return new CheckoutResult(false, s, d, v, t, p, st,null, msg);
     }
+
+    public boolean success() {
+        return true;
+    }
 }

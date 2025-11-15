@@ -17,7 +17,9 @@ import com.team.ros.pricing.ComboDiscount;
 import com.team.ros.pricing.HappyHours;
 import com.team.ros.pricing.NoDiscount;
 import com.team.ros.pricing.PricingEngine;
-import jdk.jfr.Frequency;
+import com.team.ros.order.OrderRepository;
+import com.team.ros.order.InMemoryOrderRepository;
+
 
 import java.util.Locale;
 import java.util.Scanner;
@@ -27,6 +29,7 @@ public class UserUI {
     private OrderBuilder builder;    // Конструктурирует заказ
     private Order current;           // Текущий заказ
     private MealFactory mealFactory; // Для добавления (сейчас - italian)
+    private final OrderRepository repo = InMemoryOrderRepository.getInstance();
 
     public void start() {
         System.out.println("=== Restaurant Ordering - User UI ===");
@@ -130,6 +133,7 @@ public class UserUI {
         //Создаем каркас заказа
         builder = new OrderBuilder(id);
         current = builder.build();
+        repo.save(current); // чтобы кассир видел заказ
 
         switch (pick) {
             case "1" -> {
