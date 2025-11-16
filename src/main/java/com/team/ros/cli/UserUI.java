@@ -5,30 +5,27 @@ import com.team.ros.checkout.CheckoutResult;
 import com.team.ros.config.AppConfig;
 import com.team.ros.events.EventBus;
 import com.team.ros.events.OrderEventType;
-import com.team.ros.meals.ItalianMealFactory;
-import com.team.ros.meals.Meal;
-import com.team.ros.meals.MealFactory;
-import com.team.ros.meals.MenuCategory;
-import com.team.ros.order.ComboBuilder;
-import com.team.ros.order.Order;
-import com.team.ros.order.OrderBuilder;
-import com.team.ros.pricing.ComboDiscount;
-import com.team.ros.pricing.HappyHours;
-import com.team.ros.pricing.NoDiscount;
-import com.team.ros.pricing.PricingEngine;
-import com.team.ros.order.OrderRepository;
-import com.team.ros.order.InMemoryOrderRepository;
+import com.team.ros.meals.*;
+import com.team.ros.order.*;
+import com.team.ros.pricing.*;
 
-
-import java.util.Locale;
-import java.util.Scanner;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class UserUI {
     private final Scanner in = new Scanner(System.in);
-    private OrderBuilder builder;    // Конструктурирует заказ
-    private Order current;           // Текущий заказ
-    private MealFactory mealFactory; // Для добавления (сейчас - italian)
-    private final OrderRepository repo = InMemoryOrderRepository.getInstance();
+
+    private OrderBuilder builder;     // конструктор заказа
+    private Order current;            // текущий заказ
+    private MealFactory mealFactory;  // фабрика выбранной кухни
+    private final OrderRepository repo = InMemoryOrderRepository.getInstance(); // без JSON
+
+    // Автогенерация ID заказа
+    private static String nextOrderId() {
+        String ts = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+        int rnd = new Random().nextInt(900) + 100; // 100..999
+        return "ORD-" + ts + "-" + rnd;
+    }
 
     public void start() {
         System.out.println("=== Restaurant Ordering - User UI ===");
@@ -37,7 +34,7 @@ public class UserUI {
                 System.out.println();
                 System.out.println("1) Menu");
                 System.out.println("2) New Order");
-                System.out.println("3) Show Cart Totals ");
+                System.out.println("3) Show Cart Totals");
                 System.out.println("4) Combo");
                 System.out.println("5) Checkout");
                 System.out.println("6) Select pricing strategy");
@@ -46,12 +43,13 @@ public class UserUI {
                 String cmd = in.nextLine().trim();
 
                 switch (cmd) {
-                    case "1" -> showCuisineMenus();  // Просмотр меню по кухням
-                    case "2" -> newOrderFlow();      // СОздание заказа или добавление
-                    case "3" -> showTotals();        // Корзина
-                    case "4" -> addCombo();          // Конструктор комбо (Italian)
-                    case "5" -> doCheckout();        // Оформление
-                    case "6" -> chooseStrategy();    // Выбрать стратегию
+                    case "1" -> showCuisineMenus();
+                    case "2" -> newOrderFlow();      // авто-ID, выбор кухни
+                    case "3" -> showTotals();
+                    case "4" -> addCombo();          // выбор по цифрам, скидка 10%
+                    case "5" -> doCheckout();        // выбор провайдера 1/2
+                    case "6" -> chooseStrategy();
+                    case "0" -> { return; }
                     default -> System.out.println("Unknown command.");
                 }
             } catch (RuntimeException ex) {
@@ -60,7 +58,7 @@ public class UserUI {
         }
     }
 
-    // ================== 1) MENU =================
+    // ===== 1) MENU =====
     private void showCuisineMenus() {
         while (true) {
             System.out.println("\n-- MENU --");
@@ -71,19 +69,17 @@ public class UserUI {
             System.out.print("Choose: ");
             String cmd = in.nextLine().trim();
             switch (cmd) {
-                case "1" -> previewByFactory(new com.team.ros.meals.AsianMealFactory(), "Asian");
-                case "2" -> previewByFactory(new com.team.ros.meals.ItalianMealFactory(), "Italian");
-                case "3" -> previewByFactory(new com.team.ros.meals.GeorgianMealFactory(), "Georgian");
-                case "0" -> {
-                    return;
-                }
+                case "1" -> previewByFactory(new AsianMealFactory());
+                case "2" -> previewByFactory(new ItalianMealFactory());
+                case "3" -> previewByFactory(new GeorgianMealFactory());
+                case "0" -> { return; }
                 default -> System.out.println("Unknown command.");
             }
         }
     }
 
-    private void previewByFactory(MealFactory f, String title) {
-        System.out.println("\n== " + title + " menu (IDs) ==");
+    private void previewByFactory(MealFactory f) {
+        System.out.println("\n== " + f.getClass().getSimpleName().replace("MealFactory","") + " menu (IDs) ==");
         for (MenuCategory c : MenuCategory.values()) {
             String[] ids = f.listByCategory(c);
             if (ids.length == 0) continue;
@@ -91,74 +87,50 @@ public class UserUI {
             for (String id : ids) System.out.println(" - " + id);
         }
     }
-    // Компактный показ Italian из MealFactory
-    private void previewItalian() {
-        MealFactory it = new ItalianMealFactory();
-        System.out.println("\n== Italian menu (IDs) ==");
-        for (MenuCategory c : MenuCategory.values()) {
-            String[] ids = it.listByCategory(c);
-            if (ids.length == 0) continue;
-            System.out.println("[" + c.name() + "]");
-            for (String id : ids) System.out.println(" - " + id);
-        }
-    }
 
-    private static void printCategory(String title, String[] items) {
-        if (items == null || items.length == 0) return;
-        System.out.println("[" + title + "]");
-        for (String s : items) System.out.println(" - " + s);
-    }
-
-    // ================== 2) NEW ORDER =================
+    // ===== 2) NEW ORDER =====
     private void newOrderFlow() {
         System.out.println("\n-- New order -- ");
-        System.out.print("Enter order id: ");
-        String id = in.nextLine().trim();
-        if (id.isEmpty()) {
-            System.out.println("Order id cannot be empty.");
-            return;
-        }
+        String id = nextOrderId();
+        System.out.println("Generated order id: " + id);
 
-        //Выбор кухни
         System.out.println("Choose cuisine for this order:");
-        System.out.println("1) Asian (preview only now)");
-        System.out.println("2) Italian (can add items)");
-        System.out.println("3) Georgian (preview only now)");
+        System.out.println("1) Asian");
+        System.out.println("2) Italian");
+        System.out.println("3) Georgian");
         System.out.print("Choose: ");
         String pick = in.nextLine().trim();
 
-        //Создаем каркас заказа
+        // создаём заказ и сразу кладём в репозиторий (видит кассир)
         builder = new OrderBuilder(id);
         current = builder.build();
-        repo.save(current); // чтобы кассир видел заказ
-        EventBus.publish(
-                OrderEventType.ORDER_CREATED, id
-        );
+        repo.save(current);
+        EventBus.publish(OrderEventType.ORDER_CREATED, id);
 
         switch (pick) {
             case "1" -> {
-                System.out.println("Asian selected. You can preview menu in 1) Menu.\n" + " To actually add items, implement MealFactory/adapter for Asian.");
-                addLoopItalian(false); //предложим при желании добавить из italian
+                mealFactory = new AsianMealFactory();
+                builder.withFactory(mealFactory);
+                addLoopFromFactory();   // теперь реально добавляет из Asian
             }
             case "2" -> {
-                //Полноценное добавление из Italian
                 mealFactory = new ItalianMealFactory();
                 builder.withFactory(mealFactory);
-                addLoopItalian(true);
+                addLoopFromFactory();
             }
             case "3" -> {
-                System.out.println("Georgian selected. YOu can preview menu in 1) Menu.\n" + "To actually add items, implement MealFactory/adapter for Georgian.");
-                addLoopItalian(false);
+                mealFactory = new GeorgianMealFactory();
+                builder.withFactory(mealFactory);
+                addLoopFromFactory();   // и из Georgian тоже
             }
-            default -> System.out.println("Unknown - created empty order.");
+            default -> System.out.println("Unknown cuisine. Empty order created.");
         }
     }
 
-    // Цикл добавления Italian-позиций
-    private void addLoopItalian(boolean mustAdd) {
+    private void addLoopFromFactory() {
         while (true) {
-            System.out.println("\nAdd items (Italian):");
-            System.out.println("1) FAST FOOD");
+            System.out.println("\nAdd items:");
+            System.out.println("1) FAST_FOOD");
             System.out.println("2) DESSERTS");
             System.out.println("3) HOT_DISHES");
             System.out.println("4) DRINKS");
@@ -167,10 +139,11 @@ public class UserUI {
             System.out.print("Choose: ");
             String s = in.nextLine().trim();
             if ("0".equals(s)) {
-                if (mustAdd && current.getItems().isEmpty()) {
+                if (current.getItems().isEmpty()) {
                     System.out.println("Cart is empty. Add at least 1 item.");
                     continue;
                 }
+                repo.save(current); // обновили в репозитории
                 return;
             }
             MenuCategory cat = switch (s) {
@@ -185,114 +158,116 @@ public class UserUI {
                 System.out.println("Unknown");
                 continue;
             }
-            addFromFactory(cat);
+            addByNumber(cat); // выбор по цифрам
         }
     }
 
-    private void addFromFactory(MenuCategory cat) {
+    private void addByNumber(MenuCategory cat) {
         if (mealFactory == null) {
-            System.out.println("No MealFactory bound to order (Italian only for now).");
+            System.out.println("No MealFactory bound to order.");
             return;
         }
         String[] ids = mealFactory.listByCategory(cat);
-        if (ids.length == 0) {
-            System.out.println("No items in " + cat);
-            return;
-        }
+        if (ids.length == 0) { System.out.println("No items in " + cat); return; }
 
         System.out.println("-- IDs in " + cat + " --");
         for (int i = 0; i < ids.length; i++) System.out.println((i + 1) + ") " + ids[i]);
-        System.out.print("Enter id (copy) or number: ");
+        System.out.print("Pick number: ");
         String pick = in.nextLine().trim();
+        if (!pick.matches("\\d+")) { System.out.println("Invalid number."); return; }
+        int idx = Integer.parseInt(pick) - 1;
+        if (idx < 0 || idx >= ids.length) { System.out.println("Out of range."); return; }
 
-        String chosenId = null;
-        if (pick.matches("\\d+")) {
-            int idx = Integer.parseInt(pick) - 1;
-            if (idx >= 0 && idx < ids.length) chosenId = ids[idx];
-        } else {
-            for (String s : ids)
-                if (s.equalsIgnoreCase(pick)) {
-                    chosenId = s;
-                    break;
-                }
-        }
-        if (chosenId == null) {
-            System.out.println("Invalid choice.");
-            return;
-        }
-        System.out.println("Qty (>=1): ");
+        String chosenId = ids[idx];
+        System.out.print("Qty (>=1): ");
         int qty = safeInt(in.nextLine(), 1);
         builder.add(chosenId, qty);
+        repo.save(current); // обновили, чтобы кассир видел
         System.out.println("Added: " + chosenId + " x" + qty);
     }
 
-    // ================== 3) SHOW TOTALS =================
+    // ===== 3) SHOW TOTALS =====
     private void showTotals() {
         requireOrder();
         double subtotal = current.totalBeforeVat();
-        double disc = com.team.ros.pricing.PricingEngine.discount(current);
+        double disc = PricingEngine.discount(current);
         disc = Math.max(0, Math.min(disc, subtotal));
         double after = subtotal - disc;
         double vat = after * (AppConfig.getInstance().getVatPercent() / 100.0);
         double total = after + vat;
 
-        System.out.printf(Locale.US, "Subtotal: %.2f | Discount(%s): %.2f | VAT: %.2f | TOTAL %.2f | Items: %d%n", subtotal,
-                com.team.ros.pricing.PricingEngine.current().name(), disc, vat, total, current.getItems().size());
+        System.out.printf(Locale.US,
+                "Subtotal: %.2f | Discount(%s): %.2f | VAT: %.2f | TOTAL %.2f | Items: %d%n",
+                subtotal, PricingEngine.current().name(), disc, vat, total, current.getItems().size());
     }
 
-    // ================== 4) COMBO (Italian)  =================
+    // ===== 4) COMBO (по цифрам, скидка фикс 10%) =====
     private void addCombo() {
         requireOrder();
-        //для комбо нужен MealFactory -> используем Italian
-        MealFactory it = new ItalianMealFactory();
-        ComboBuilder cb = new ComboBuilder().withFactory(it);
+        MealFactory f = (mealFactory != null) ? mealFactory : new ItalianMealFactory();
 
-        System.out.println("-- Build Combo (Italian IDs) --");
-        String id1 = pickId(it, MenuCategory.FAST_FOOD, "First item id");
+        String id1 = pickIdByNumber(f, MenuCategory.FAST_FOOD, "Pick #1 (FAST_FOOD): ");
         if (id1 == null) return;
-        cb.first(id1);
 
-        String id2 = pickId(it, MenuCategory.DRINKS, "Second item id");
+        String id2 = pickIdByNumber(f, MenuCategory.DRINKS, "Pick #2 (DRINKS): ");
         if (id2 == null) return;
-        cb.second(id2);
 
-        System.out.println("Discount percent (0..100, default 10): ");
-        double p = safeDouble(in.nextLine(), 10.0);
-        cb.discount(Math.max(0, Math.min(100, p)));
+        ComboBuilder cb = new ComboBuilder()
+                .withFactory(f)
+                .first(id1)
+                .second(id2)
+                .discount(10.0); // фикс 10%
 
-        System.out.println("Combo id: ");
-        String comboId = in.nextLine().trim();
-        if (comboId.isEmpty()) comboId = "COMBO_ " + System.currentTimeMillis();
-
+        String comboId = "COMBO-" + System.currentTimeMillis();
         Meal combo = cb.build(comboId);
-        if(combo == null) {
-            System.out.println("Combo build failed.");
-            return;
-        }
+        if (combo == null) { System.out.println("Combo build failed."); return; }
 
         current.add(combo, 1);
+        repo.save(current);
         System.out.println("Combo added: " + combo.name() + " | price=" + combo.price());
     }
 
-    // ================== 5) CHECKOUT =================
+    private String pickIdByNumber(MealFactory f, MenuCategory c, String prompt) {
+        String[] ids = f.listByCategory(c);
+        if (ids.length == 0) { System.out.println("No items in " + c); return null; }
+        System.out.println("[" + c + "] ids:");
+        for (int i = 0; i < ids.length; i++) System.out.println((i + 1) + ") " + ids[i]);
+        System.out.print(prompt);
+        String s = in.nextLine().trim();
+        if (!s.matches("\\d+")) { System.out.println("Invalid number."); return null; }
+        int idx = Integer.parseInt(s) - 1;
+        if (idx < 0 || idx >= ids.length) { System.out.println("Out of range."); return null; }
+        return ids[idx];
+    }
+
+    // ===== 5) CHECKOUT (провайдер по цифре) =====
     private void doCheckout() {
         requireOrder();
-        System.out.println("Payment provider (enter for default=" + AppConfig.getInstance().getDefaultPaymentProvider() + "): ");
-        String provider = in.nextLine().trim();
-        if (provider.isEmpty()) provider = AppConfig.getInstance().getDefaultPaymentProvider();
+        System.out.println("Payment provider:");
+        System.out.println("1) KASPI");
+        System.out.println("2) STRIPE");
+        System.out.print("Choose: ");
+        String s = in.nextLine().trim();
+
+        String provider = switch (s) {
+            case "1" -> "KaspiMock";
+            case "2" -> "StripeMock";
+            default -> AppConfig.getInstance().getDefaultPaymentProvider();
+        };
 
         CheckoutResult res = CheckoutFacade.checkout(current, provider);
         System.out.println();
         if (res.success()) {
             System.out.println("=== PAYMENT SUCCESS ===");
-            // Will be updated
+            repo.save(current); // статус PAID запишется в синглтон
+            System.out.println(res.receiptText());
         } else {
             System.out.println("=== PAYMENT FAILED ===");
-            System.out.println("Reason: " + res); //Will be updated too
+            System.out.println("Reason: " + res.reason());
         }
     }
 
-    // ================== 6) PRICING STRATEGY =================
+    // ===== 6) STRATEGY =====
     private void chooseStrategy() {
         System.out.println("Pricing strategies:");
         System.out.println("1) NoDiscount");
@@ -300,51 +275,21 @@ public class UserUI {
         System.out.println("3) HappyHours(15:00-17:00, 20%)");
         System.out.print("Choose: ");
         String s = in.nextLine().trim();
-        switch(s) {
+        switch (s) {
             case "1" -> PricingEngine.use(new NoDiscount());
             case "2" -> PricingEngine.use(new ComboDiscount(10.0));
             case "3" -> PricingEngine.use(new HappyHours(15, 17, 20.0));
-            default -> {
-                System.out.println("Unknown - keep current.");
-                return;
-            }
+            default -> { System.out.println("Unknown - keep current."); return; }
         }
         System.out.println("Strategy set to: " + PricingEngine.current().name());
     }
 
-    private String pickId(MealFactory f, MenuCategory c, String prompt) {
-        String[] ids = f.listByCategory(c);
-        if (ids.length == 0) {
-            System.out.println("No items in " + c);
-            return null;
-        }
-        System.out.println("[" + c + "] ids:");
-        for (String id : ids) System.out.println(" - " + id);
-        System.out.print(prompt + ": ");
-        String s = in.nextLine().trim();
-        for (String id : ids) if (id.equalsIgnoreCase(s)) return id;
-        System.out.println("Invalid id.");
-        return null;
-    }
-
-    //===================== helpers =====================
+    // ===== helpers =====
     private void requireOrder() {
         if (current == null) throw new IllegalStateException("Create order first in 2) New Order.");
     }
-
     private static int safeInt(String s, int def) {
-        try {
-            return Math.max(1, Integer.parseInt(s.trim()));
-        } catch (Exception ignore) {
-            return def;
-        }
-    }
-
-    private static double safeDouble(String s, double def) {
-        try {
-            return Double.parseDouble(s.trim());
-        } catch (Exception ignore) {
-            return def;
-        }
+        try { return Math.max(1, Integer.parseInt(s.trim())); }
+        catch (Exception ignore) { return def; }
     }
 }
