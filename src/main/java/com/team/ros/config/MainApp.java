@@ -11,7 +11,16 @@ public class MainApp {
         System.out.print("Choose: ");
         java.util.Scanner in = new java.util.Scanner(System.in);
         String s = in.nextLine().trim();
-        if ("1".equals(s)) new com.team.ros.cli.UserUI().start();
-        else new com.team.ros.cli.CashierUI().start();
+        while (true) {
+            System.out.println("Start as:\n1) User UI\n2) Cashier UI\n0) Exit");
+            String pick = in.nextLine().trim();
+            switch (pick) {
+                case "1" -> new UserUI().start();     // вернёшься сюда, когда в UI нажмёшь 0
+                case "2" -> new CashierUI().start();  // то же
+                case "0" -> { return; }
+                default -> System.out.println("Unknown");
+            }
+        }
+
     }
 }
