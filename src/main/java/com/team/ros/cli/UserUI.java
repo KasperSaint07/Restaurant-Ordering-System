@@ -5,9 +5,6 @@ import com.team.ros.checkout.CheckoutResult;
 import com.team.ros.config.AppConfig;
 import com.team.ros.events.EventBus;
 import com.team.ros.events.OrderEventType;
-import com.team.ros.kitchenfactory.AsianKitchenFactory;
-import com.team.ros.kitchenfactory.GeorgianKitchenFactory;
-import com.team.ros.kitchenfactory.KitchenFactory;
 import com.team.ros.meals.ItalianMealFactory;
 import com.team.ros.meals.Meal;
 import com.team.ros.meals.MealFactory;
@@ -74,9 +71,9 @@ public class UserUI {
             System.out.print("Choose: ");
             String cmd = in.nextLine().trim();
             switch (cmd) {
-                case "1" -> previewKitchen(new AsianKitchenFactory());
-                case "2" -> previewItalian();
-                case "3" -> previewKitchen(new GeorgianKitchenFactory());
+                case "1" -> previewByFactory(new com.team.ros.meals.AsianMealFactory(), "Asian");
+                case "2" -> previewByFactory(new com.team.ros.meals.ItalianMealFactory(), "Italian");
+                case "3" -> previewByFactory(new com.team.ros.meals.GeorgianMealFactory(), "Georgian");
                 case "0" -> {
                     return;
                 }
@@ -85,17 +82,15 @@ public class UserUI {
         }
     }
 
-    // Показ меню кухни, у которой пока нет цен/ккал/Id
-    private void previewKitchen(KitchenFactory k) {
-        System.out.println("\n== " + k.getName() + " menu ==");
-        printCategory("FAST_FOOD", k.fastFood());
-        printCategory("DESSERTS", k.desserts());
-        printCategory("HOT_DISHES", k.hotDishes());
-        printCategory("DRINKS", k.drinks());
-        printCategory("ALCOHOL", k.alcohol());
-        System.out.println("(Preview only - add to cart will be available when MealFactory is implemented.)");
+    private void previewByFactory(MealFactory f, String title) {
+        System.out.println("\n== " + title + " menu (IDs) ==");
+        for (MenuCategory c : MenuCategory.values()) {
+            String[] ids = f.listByCategory(c);
+            if (ids.length == 0) continue;
+            System.out.println("[" + c.name() + "]");
+            for (String id : ids) System.out.println(" - " + id);
+        }
     }
-
     // Компактный показ Italian из MealFactory
     private void previewItalian() {
         MealFactory it = new ItalianMealFactory();

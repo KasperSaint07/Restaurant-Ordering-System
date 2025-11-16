@@ -106,7 +106,7 @@ public class CashierUI {
     private void reprintReceipt() {
         System.out.print("Order id to reprint: ");
         String id = in.nextLine().trim();
-        Order o = Orders.get(id);
+        Order o = repo.findById(id).orElse(null);
         if (o == null) { System.out.println("Order not found."); return; }
 
         double subtotal = o.totalBeforeVat();
