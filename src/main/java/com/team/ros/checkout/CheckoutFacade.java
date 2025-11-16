@@ -30,22 +30,30 @@ public final class CheckoutFacade {
 
             String provider = (providerName == null || providerName.isBlank()) ? AppConfig.getInstance().getDefaultPaymentProvider() : providerName;
 
+            String currency = AppConfig.getInstance().getCurrency();
+            String orderId  = order.getId();
+
             PaymentAdapter adapter = PaymentRegistry.byName(provider);
             if (adapter == null) {
                 EventBus.publish(OrderEventType.PAYMENT_FAILED, order.getId());
-                return CheckoutResult.failed(subtotal, discount, vat, total, provider, strategyName, "Unknown payment provider: " + provider);
+                return CheckoutResult.failed(subtotal, discount, vat, total, currency, provider, strategyName,orderId, "Unknown payment provider: " + provider);
             }
 
             boolean paid = adapter.pay(order.getId(), total);
             if (!paid) {
                 EventBus.publish(OrderEventType.PAYMENT_FAILED, order.getId());
-                return CheckoutResult.failed(subtotal, discount, vat, total, provider, strategyName, "Payment rejected by provider");
+                return CheckoutResult.failed(subtotal, discount, vat, total, currency, provider, strategyName, orderId,"Payment rejected by provider" + provider);
             }
             order.setStatus(OrderStatus.PAID);
 
             String receiptText = ReceiptPrinters.defaultPrinter()
                     .print(order, subtotal, discount, vat, total, provider, strategyName);
 
-            return CheckoutResult.success(subtotal, discount, vat, total, provider, strategyName, receiptText);
+            return CheckoutResult.success(subtotal, discount, vat, total,currency, provider, strategyName, orderId, receiptText);
         }
+
+
+
+
     }
+
