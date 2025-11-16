@@ -6,5 +6,6 @@ public class MainApp {
     public static void main(String[] args) {
         NotifierSetup.initDefault();
         new CashierUI().start();
+        new UserUI().start();
     }
 }

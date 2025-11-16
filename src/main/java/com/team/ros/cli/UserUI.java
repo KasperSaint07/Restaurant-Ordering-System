@@ -3,6 +3,8 @@ package com.team.ros.cli;
 import com.team.ros.checkout.CheckoutFacade;
 import com.team.ros.checkout.CheckoutResult;
 import com.team.ros.config.AppConfig;
+import com.team.ros.events.EventBus;
+import com.team.ros.events.OrderEventType;
 import com.team.ros.kitchenfactory.AsianKitchenFactory;
 import com.team.ros.kitchenfactory.GeorgianKitchenFactory;
 import com.team.ros.kitchenfactory.KitchenFactory;
@@ -101,7 +103,7 @@ public class UserUI {
         for (MenuCategory c : MenuCategory.values()) {
             String[] ids = it.listByCategory(c);
             if (ids.length == 0) continue;
-            System.out.println("[" + "]");
+            System.out.println("[" + c.name() + "]");
             for (String id : ids) System.out.println(" - " + id);
         }
     }
@@ -134,6 +136,9 @@ public class UserUI {
         builder = new OrderBuilder(id);
         current = builder.build();
         repo.save(current); // чтобы кассир видел заказ
+        EventBus.publish(
+                OrderEventType.ORDER_CREATED, id
+        );
 
         switch (pick) {
             case "1" -> {

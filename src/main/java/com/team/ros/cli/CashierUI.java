@@ -4,13 +4,11 @@ import com.team.ros.config.AppConfig;
 import com.team.ros.order.Order;
 import com.team.ros.order.OrderItem;
 import com.team.ros.order.OrderStatus;
-import com.team.ros.order.Orders;
 import com.team.ros.pricing.PricingEngine;
 import com.team.ros.checkout.ReceiptPrinters;
 import com.team.ros.order.OrderRepository;
 import com.team.ros.order.InMemoryOrderRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;

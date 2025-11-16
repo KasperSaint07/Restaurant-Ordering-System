@@ -14,7 +14,7 @@ public class ComboMeal implements Meal {
         this.name = name;
         this.price = price;
         this.calories = calories;
-        this.category = MenuCategory.FAST_FOOD;
+        this.category = MenuCategory.COMBO;
     }
 
     @Override public String id() { return id; }

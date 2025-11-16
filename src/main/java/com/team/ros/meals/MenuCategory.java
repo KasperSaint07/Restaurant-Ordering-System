@@ -5,5 +5,6 @@ public enum MenuCategory {
     DESSERTS,
     HOT_DISHES,
     DRINKS,
-    ALCOHOL
+    ALCOHOL,
+    COMBO
 }
