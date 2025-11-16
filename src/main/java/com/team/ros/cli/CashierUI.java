@@ -45,7 +45,7 @@ public class CashierUI {
         }
     }
 
-    // ---------- Actions ----------
+
 
     private void listOrders() {
         var all = repo.findAll();
@@ -82,7 +82,7 @@ public class CashierUI {
         try {
             OrderStatus st = OrderStatus.valueOf(s);
             o.setStatus(st);
-            repo.save(o); // перезаписываем (не обязательно, но логично)
+            repo.save(o);
             System.out.println("Updated: " + o.getId() + " -> " + st);
         } catch (IllegalArgumentException ex) {
             System.out.println("Invalid status.");
@@ -102,11 +102,11 @@ public class CashierUI {
     }
 
 
-    /** Повторная печать чека: пересчитываем суммы и шлём в принтер-адаптер. */
+
     private void reprintReceipt() {
         System.out.print("Order id to reprint: ");
         String id = in.nextLine().trim();
-        Order o = repo.findById(id).orElse(null);
+        Order o = repo.findById(id).orElse(null); // <-- вместо Orders.get(id)
         if (o == null) { System.out.println("Order not found."); return; }
 
         double subtotal = o.totalBeforeVat();
@@ -119,14 +119,13 @@ public class CashierUI {
         String provider = AppConfig.getInstance().getDefaultPaymentProvider();
         String strategy = PricingEngine.current().name();
 
-        String text = ReceiptPrinters.defaultPrinter()
+        String text = com.team.ros.checkout.ReceiptPrinters.defaultPrinter()
                 .print(o, subtotal, disc, vat, total, provider, strategy);
 
         System.out.println("--- REPRINTED RECEIPT ---");
         System.out.println(text);
     }
 
-    // ---------- Order screen ----------
 
     private void orderScreen(Order o) {
         while (true) {
@@ -170,8 +169,6 @@ public class CashierUI {
         System.out.println("--- REPRINTED RECEIPT ---");
         System.out.println(text);
     }
-
-    // ---------- Helpers ----------
 
     private void showOrderDetails(Order o) {
         if (o.getItems().isEmpty()) {
